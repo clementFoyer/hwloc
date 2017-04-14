@@ -1,0 +1,824 @@
+<?xml version="1.1"?>
+
+<!--
+Copyright © 2009      CNRS
+Copyright © 2009-2017 Inria.  All rights reserved.
+Copyright © 2009-2011 Université Bordeaux.
+See COPYING in top-level directory.
+-->
+
+<xsd:schema version="1.0"
+            xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            xmlns:vc="http://www.w3.org/2007/XMLSchema-versioning"
+            vc:minVersion="1.1"
+            elementFormDefault="qualified">
+
+  <xsd:annotation>
+    <xsd:documentation xml:lang="en">
+      Hwloc schema for hardware detection.
+      Copyright © 2009      CNRS
+      Copyright © 2009-2017 Inria.  All rights reserved.
+      Copyright © 2009-2011 Université Bordeaux.
+      See COPYING in top-level directory.
+    </xsd:documentation>
+  </xsd:annotation>
+
+  <!-- Element definition -->
+
+  <xsd:element name="topology">
+    <xsd:alternative test="@kind='2.0'" type="TopologyType2.0"/>
+    <xsd:alternative                    type="TopologyType1.11"/>
+  </xsd:element>
+
+  <xsd:element name="topologydiff" type="TopologyDiffType"/>
+  
+  <!-- Types definitions -->
+
+  <!-- Version 2.0 -->
+
+  <xsd:complexType name="TopologyType2.0">
+    <xsd:sequence>
+      <xsd:group ref="Object2.0Elt"/>
+      <xsd:element name="distances2" type="DistancesType2.0" maxOccurs="unbounded" minOccurs="0"/>
+    </xsd:sequence>
+    <xsd:attribute name="kind" fixed="2.0">
+      <xsd:simpleType>
+        <xsd:restriction base="xsd:decimal">
+          <xsd:enumeration value="2.0"/>
+        </xsd:restriction>
+      </xsd:simpleType>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <!--
+      Abstract type to be derived to defined attributes/elements of each specific kind of objects
+  -->
+  <xsd:complexType name="ObjectType2.0_full" abstract="true">
+    <xsd:sequence>
+      <xsd:element name="page_type" type="Page_typeType" minOccurs="0" maxOccurs="unbounded"/>
+      <xsd:element name="info"      type="InfoType"      minOccurs="0" maxOccurs="unbounded"/>
+      <xsd:element name="userdata"  type="UserdataType"  minOccurs="0" maxOccurs="unbounded"/>
+      <xsd:group   ref="Object2.0Elt"                    minOccurs="0"/>
+    </xsd:sequence>
+    <xsd:attribute name="subtype"  type="xsd:Name"/>
+    <xsd:attribute name="gp_index" type="xsd:integer" use="required"/>
+    <xsd:attribute name="name"     type="xsd:Name"/>
+  </xsd:complexType>
+  <xsd:complexType name="ObjectType2.0_full_osidx" abstract="true">
+    <xsd:complexContent>
+      <xsd:extension base="ObjectType2.0_full">
+        <xsd:attribute name="os_index" type="xsd:integer" use="required"/>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+  <xsd:complexType name="ObjectType2.0_full_nosidx" abstract="true">
+    <xsd:complexContent>
+      <xsd:extension base="ObjectType2.0_full">
+        <xsd:attribute name="os_index" type="xsd:integer"/>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+
+  <xsd:group name="ObjGroup2.0">
+    <xsd:annotation>
+      <xsd:documentation>
+        Redefinition of ObjectType2.0_full element in order to restrict page_type elements.
+      </xsd:documentation>
+    </xsd:annotation>
+    <xsd:sequence>
+      <xsd:element name="page_type" type="Page_typeType" minOccurs="0" maxOccurs="0"/>
+      <xsd:element name="info"      type="InfoType"      minOccurs="0" maxOccurs="unbounded"/>
+      <xsd:element name="userdata"  type="UserdataType"  minOccurs="0" maxOccurs="unbounded"/>
+      <xsd:group   ref="Object2.0Elt"                    minOccurs="0"/>
+    </xsd:sequence>
+  </xsd:group>
+  
+  <xsd:complexType name="ObjectType2.0" abstract="true">
+    <xsd:annotation>
+      <xsd:documentation>
+        Object with forbidden use of page_type element and optional definition
+        of os_index attribute.
+      </xsd:documentation>
+    </xsd:annotation>
+    <xsd:complexContent>
+      <xsd:restriction base="ObjectType2.0_full_nosidx">
+        <xsd:sequence>
+          <xsd:group ref="ObjGroup2.0"/>
+        </xsd:sequence>
+      </xsd:restriction>
+    </xsd:complexContent>
+  </xsd:complexType>
+  
+  <xsd:complexType name="ObjectType2.0_osidx" abstract="true">
+    <xsd:annotation>
+      <xsd:documentation>
+        Object with forbidden use of page_type element and mandatory definition
+        of os_index attribute.
+      </xsd:documentation>
+    </xsd:annotation>
+    <xsd:complexContent>
+      <xsd:restriction base="ObjectType2.0_full_osidx">
+        <xsd:sequence>
+          <xsd:group ref="ObjGroup2.0"/>
+        </xsd:sequence>        
+      </xsd:restriction>
+    </xsd:complexContent>
+  </xsd:complexType>
+  
+  <xsd:group name="Object2.0Elt">
+    <xsd:sequence>
+      <xsd:element name="object" maxOccurs="unbounded">
+        <xsd:alternative test="@type='System'"   type="ObjectType2.0_sys"/>
+        <xsd:alternative test="@type='Machine'"  type="ObjectType2.0_machine"/>
+        <xsd:alternative test="@type='Misc'"     type="ObjectType2.0_misc"/>
+        <xsd:alternative test="@type='Group'"    type="ObjectType2.0_group"/>
+        <xsd:alternative test="@type='NUMANode'" type="ObjectType2.0_NUMA"/>
+        <xsd:alternative test="@type='Package'"  type="ObjectType2.0_pack"/>
+        <xsd:alternative test="@type='L1Cache'"  type="ObjectType2.0_L1"/>
+        <xsd:alternative test="@type='L2Cache'"  type="ObjectType2.0_L2"/>
+        <xsd:alternative test="@type='L3Cache'"  type="ObjectType2.0_L3"/>
+        <xsd:alternative test="@type='L4Cache'"  type="ObjectType2.0_L4"/>
+        <xsd:alternative test="@type='L5Cache'"  type="ObjectType2.0_L5"/>
+        <xsd:alternative test="@type='L1iCache'" type="ObjectType2.0_L1i"/>
+        <xsd:alternative test="@type='L2iCache'" type="ObjectType2.0_L2i"/>
+        <xsd:alternative test="@type='L3iCache'" type="ObjectType2.0_L3i"/>
+        <xsd:alternative test="@type='Core'"     type="ObjectType2.0_core"/>
+        <xsd:alternative test="@type='PU'"       type="ObjectType2.0_pu"/>
+        <xsd:alternative test="@type='Bridge'"   type="ObjectType2.0_bridge"/>
+        <xsd:alternative test="@type='PCIDev'"   type="ObjectType2.0_pci"/>
+        <xsd:alternative test="@type='OSDev'"    type="ObjectType2.0_os"/>
+      </xsd:element>
+    </xsd:sequence>
+  </xsd:group>
+  
+  <xsd:simpleType name="ObjType2.0">
+    <xsd:restriction base="xsd:Name">
+      <xsd:enumeration value="System"/>
+      <xsd:enumeration value="Machine"/>
+      <xsd:enumeration value="Misc"/>
+      <xsd:enumeration value="Group"/>
+      <xsd:enumeration value="NUMANode"/>
+      <xsd:enumeration value="Package"/>
+      <xsd:enumeration value="L1Cache"/>
+      <xsd:enumeration value="L2Cache"/>
+      <xsd:enumeration value="L3Cache"/>
+      <xsd:enumeration value="L4Cache"/>
+      <xsd:enumeration value="L5Cache"/>
+      <xsd:enumeration value="L1iCache"/>
+      <xsd:enumeration value="L2iCache"/>
+      <xsd:enumeration value="L3iCache"/>
+      <xsd:enumeration value="Core"/>
+      <xsd:enumeration value="PU"/>
+      <xsd:enumeration value="Bridge"/>
+      <xsd:enumeration value="PCIDev"/>
+      <xsd:enumeration value="OSDev"/>
+    </xsd:restriction>
+  </xsd:simpleType>
+  
+  <!--  Each specific type definition -->
+  <xsd:complexType name="ObjectType2.0_sys">
+    <xsd:complexContent>
+      <xsd:extension base="ObjectType2.0">
+        <xsd:attribute name="type"             type="ObjType2.0"  use="required" fixed="System"/>
+        <xsd:attribute name="cpuset"           type="HexListType" use="required"/>
+        <xsd:attribute name="complete_cpuset"  type="HexListType" use="required"/>
+        <xsd:attribute name="allowed_cpuset"   type="HexListType" use="required"/>
+        <xsd:attribute name="nodeset"          type="HexType"     use="required"/>
+        <xsd:attribute name="complete_nodeset" type="HexType"     use="required"/>
+        <xsd:attribute name="allowed_nodeset"  type="HexType"     use="required"/>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+  <xsd:complexType name="ObjectType2.0_machine">
+    <xsd:complexContent> 
+      <xsd:extension base="ObjectType2.0_full_nosidx">
+        <xsd:attribute name="type"             type="ObjType2.0"  use="required" fixed="Machine"/>
+        <xsd:attribute name="cpuset"           type="HexListType" use="required"/>
+        <xsd:attribute name="complete_cpuset"  type="HexListType" use="required"/>
+        <xsd:attribute name="allowed_cpuset"   type="HexListType" use="required"/>
+        <xsd:attribute name="nodeset"          type="HexType"     use="required"/>
+        <xsd:attribute name="complete_nodeset" type="HexType"     use="required"/>
+        <xsd:attribute name="allowed_nodeset"  type="HexType"     use="required"/>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+  <xsd:complexType name="ObjectType2.0_misc">
+    <xsd:complexContent>
+      <xsd:extension base="ObjectType2.0">
+        <xsd:attribute name="type"             type="ObjType2.0"  use="required" fixed="Misc"/>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+  <xsd:complexType name="ObjectType2.0_group">
+    <xsd:complexContent>
+      <xsd:extension base="ObjectType2.0">
+        <xsd:attribute name="type"             type="ObjType2.0"  use="required" fixed="Group"/>
+        <xsd:attribute name="cpuset"           type="HexListType" use="required"/>
+        <xsd:attribute name="complete_cpuset"  type="HexListType" use="required"/>
+        <xsd:attribute name="allowed_cpuset"   type="HexListType" use="required"/>
+        <xsd:attribute name="nodeset"          type="HexType"     use="required"/>
+        <xsd:attribute name="complete_nodeset" type="HexType"     use="required"/>
+        <xsd:attribute name="allowed_nodeset"  type="HexType"     use="required"/>
+        <xsd:attribute name="kind"             type="xsd:integer" use="required"/>
+        <xsd:attribute name="subkind"          type="xsd:integer" use="required"/>
+        <xsd:attribute name="depth"            type="xsd:integer">
+          <xsd:annotation>
+            <xsd:appinfo>Deprecated</xsd:appinfo>
+          </xsd:annotation>
+        </xsd:attribute>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+  <xsd:complexType name="ObjectType2.0_NUMA">
+    <xsd:complexContent>
+      <xsd:extension base="ObjectType2.0_full_osidx">
+        <xsd:attribute name="type"             type="ObjType2.0" use="required" fixed="NUMANode"/>
+        <xsd:attribute name="local_memory"     type="xsd:integer" default="0"/>
+        <xsd:attribute name="cpuset"           type="HexListType" use="required"/>
+        <xsd:attribute name="complete_cpuset"  type="HexListType" use="required"/>
+        <xsd:attribute name="allowed_cpuset"   type="HexListType" use="required"/>
+        <xsd:attribute name="nodeset"          type="HexType"     use="required"/>
+        <xsd:attribute name="complete_nodeset" type="HexType"     use="required"/>
+        <xsd:attribute name="allowed_nodeset"  type="HexType"     use="required"/>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+  <xsd:complexType name="ObjectType2.0_pack">
+    <xsd:complexContent>
+      <xsd:extension base="ObjectType2.0">
+        <xsd:attribute name="type"             type="ObjType2.0"  use="required" fixed="Package"/>
+        <xsd:attribute name="cpuset"           type="HexListType" use="required"/>
+        <xsd:attribute name="complete_cpuset"  type="HexListType" use="required"/>
+        <xsd:attribute name="allowed_cpuset"   type="HexListType" use="required"/>
+        <xsd:attribute name="nodeset"          type="HexType"     use="required"/>
+        <xsd:attribute name="complete_nodeset" type="HexType"     use="required"/>
+        <xsd:attribute name="allowed_nodeset"  type="HexType"     use="required"/>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+  <xsd:complexType name="ObjectType2.0_cache" abstract="true">
+    <xsd:complexContent>
+      <xsd:extension base="ObjectType2.0">
+        <xsd:attribute name="depth"               type="xsd:integer" use="required"/>
+        <xsd:attribute name="cache_size"          type="xsd:integer" use="required"/>
+        <xsd:attribute name="cache_linesize"      type="xsd:integer" use="required"/>
+        <xsd:attribute name="cache_associativity" type="xsd:integer" use="required"/>
+        <xsd:attribute name="cache_type"          type="xsd:integer" use="required"/>
+        <xsd:attribute name="cpuset"              type="HexListType" use="required"/>
+        <xsd:attribute name="complete_cpuset"     type="HexListType" use="required"/>
+        <xsd:attribute name="allowed_cpuset"      type="HexListType" use="required"/>
+        <xsd:attribute name="nodeset"             type="HexType"     use="required"/>
+        <xsd:attribute name="complete_nodeset"    type="HexType"     use="required"/>
+        <xsd:attribute name="allowed_nodeset"     type="HexType"     use="required"/>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+  <xsd:complexType name="ObjectType2.0_L1">
+    <xsd:complexContent>
+      <xsd:extension base="ObjectType2.0_cache">
+        <xsd:attribute name="type" type="ObjType2.0"  use="required" fixed="L1Cache"/>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+  <xsd:complexType name="ObjectType2.0_L2">
+    <xsd:complexContent>
+      <xsd:extension base="ObjectType2.0_cache">
+        <xsd:attribute name="type" type="ObjType2.0"  use="required" fixed="L2Cache"/>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+  <xsd:complexType name="ObjectType2.0_L3">
+    <xsd:complexContent>
+      <xsd:extension base="ObjectType2.0_cache">
+        <xsd:attribute name="type" type="ObjType2.0"  use="required" fixed="L3Cache"/>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+  <xsd:complexType name="ObjectType2.0_L4">
+    <xsd:complexContent>
+      <xsd:extension base="ObjectType2.0_cache">
+        <xsd:attribute name="type" type="ObjType2.0"  use="required" fixed="L4Cache"/>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+  <xsd:complexType name="ObjectType2.0_L5">
+    <xsd:complexContent>
+      <xsd:extension base="ObjectType2.0_cache">
+        <xsd:attribute name="type" type="ObjType2.0"  use="required" fixed="L5Cache"/>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+  <xsd:complexType name="ObjectType2.0_L1i">
+    <xsd:complexContent>
+      <xsd:extension base="ObjectType2.0_cache">
+        <xsd:attribute name="type" type="ObjType2.0"  use="required" fixed="L1iCache"/>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+  <xsd:complexType name="ObjectType2.0_L2i">
+    <xsd:complexContent>
+      <xsd:extension base="ObjectType2.0_cache">
+        <xsd:attribute name="type" type="ObjType2.0"  use="required" fixed="L2iCache"/>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+  <xsd:complexType name="ObjectType2.0_L3i">
+    <xsd:complexContent>
+      <xsd:extension base="ObjectType2.0_cache">
+        <xsd:attribute name="type" type="ObjType2.0"  use="required" fixed="L3iCache"/>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+  <xsd:complexType name="ObjectType2.0_core">
+    <xsd:complexContent>
+      <xsd:extension base="ObjectType2.0">
+        <xsd:attribute name="type"             type="ObjType2.0"  use="required" fixed="Core"/>
+        <xsd:attribute name="cpuset"           type="HexListType" use="required"/>
+        <xsd:attribute name="complete_cpuset"  type="HexListType" use="required"/>
+        <xsd:attribute name="allowed_cpuset"   type="HexListType" use="required"/>
+        <xsd:attribute name="nodeset"          type="HexType"     use="required"/>
+        <xsd:attribute name="complete_nodeset" type="HexType"     use="required"/>
+        <xsd:attribute name="allowed_nodeset"  type="HexType"     use="required"/>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+  <xsd:complexType name="ObjectType2.0_pu">
+    <xsd:complexContent>
+      <xsd:extension base="ObjectType2.0_osidx">
+        <xsd:attribute name="type"             type="ObjType2.0"  use="required" fixed="PU"/>
+        <xsd:attribute name="cpuset"           type="HexListType" use="required"/>
+        <xsd:attribute name="complete_cpuset"  type="HexListType" use="required"/>
+        <xsd:attribute name="allowed_cpuset"   type="HexListType" use="required"/>
+        <xsd:attribute name="nodeset"          type="HexType"     use="required"/>
+        <xsd:attribute name="complete_nodeset" type="HexType"     use="required"/>
+        <xsd:attribute name="allowed_nodeset"  type="HexType"     use="required"/>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+  <xsd:complexType name="ObjectType2.0_bridge">
+    <xsd:complexContent>
+      <xsd:extension base="ObjectType2.0">
+        <xsd:attribute name="type"        type="ObjType2.0"  use="required" fixed="Bridge"/>
+        <xsd:attribute name="bridge_type" type="xsd:string"  use="required"/>
+        <xsd:attribute name="bridge_pci"  type="xsd:string"  use="required"/>
+        <xsd:attribute name="depth"       type="xsd:integer">
+          <xsd:annotation>
+            <xsd:appinfo>Deprecated</xsd:appinfo>
+          </xsd:annotation>
+        </xsd:attribute>
+        <xsd:attribute name="pci_busid"      type="xsd:string">
+          <xsd:annotation>
+            <xsd:documentation>PCI downstream</xsd:documentation>
+          </xsd:annotation>
+        </xsd:attribute>
+        <xsd:attribute name="pci_type"       type="xsd:string">
+          <xsd:annotation>
+            <xsd:documentation>PCI downstream</xsd:documentation>
+          </xsd:annotation>
+        </xsd:attribute>
+        <xsd:attribute name="pci_link_speed" type="xsd:decimal">
+          <xsd:annotation>
+            <xsd:documentation>PCI downstream</xsd:documentation>
+          </xsd:annotation>
+        </xsd:attribute>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+  <xsd:complexType name="ObjectType2.0_pci">
+    <xsd:complexContent>
+      <xsd:extension base="ObjectType2.0">
+        <xsd:attribute name="type"           type="ObjType2.0"  use="required" fixed="PCIDev"/>
+        <xsd:attribute name="pci_busid"      type="xsd:string"  use="required"/>
+        <xsd:attribute name="pci_type"       type="xsd:string"  use="required"/>
+        <xsd:attribute name="pci_link_speed" type="xsd:decimal" use="required"/>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+  <xsd:complexType name="ObjectType2.0_os">
+    <xsd:complexContent>
+      <xsd:extension base="ObjectType2.0">
+        <xsd:attribute name="type"       type="ObjType2.0"  use="required" fixed="OSDev"/>
+        <xsd:attribute name="osdev_type" type="xsd:integer" use="required"/>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+
+  <xsd:complexType name="DistancesType2.0">
+    <xsd:sequence>
+      <xsd:element name="indexes"   type="IndexesType"   maxOccurs="unbounded"/>
+      <xsd:element name="u64values" type="U64valuesType" maxOccurs="unbounded"/>
+    </xsd:sequence>
+    <xsd:attribute name="type"     type="ObjType2.0"             use="required"/>
+    <xsd:attribute name="nbobjs"   type="xsd:nonNegativeInteger" use="required"/>
+    <xsd:attribute name="indexing" type="xsd:Name"               use="required"/>
+    <xsd:attribute name="kind"     type="xsd:integer"            use="required"/>
+  </xsd:complexType>
+
+  <xsd:simpleType name="IntListType">
+    <xsd:list itemType="xsd:nonNegativeInteger"/>
+  </xsd:simpleType>
+
+  <xsd:simpleType name="HexType">
+    <xsd:restriction base="xsd:token">
+      <xsd:pattern value="0x[0-9A-Fa-f]+"/>
+    </xsd:restriction>
+  </xsd:simpleType>
+
+  <xsd:simpleType name="HexListType">
+    <xsd:annotation>
+      <xsd:documentation>Coma separated list of hexadecimal (HexType) values</xsd:documentation>
+    </xsd:annotation>
+    <xsd:restriction base="xsd:token">
+      <xsd:pattern value="(0x[0-9A-Fa-f]+,+)*0x[0-9A-Fa-f]+"/>
+    </xsd:restriction>
+  </xsd:simpleType>
+  
+  <xsd:complexType name="IndexesType">
+    <xsd:simpleContent>
+      <xsd:extension base="IntListType">
+        <xsd:attribute name="length" type="xsd:nonNegativeInteger" use="required"/>
+      </xsd:extension>
+    </xsd:simpleContent>
+  </xsd:complexType>
+
+  <xsd:complexType name="U64valuesType">
+    <xsd:simpleContent>
+      <xsd:extension base="IntListType">
+        <xsd:attribute name="length" type="xsd:nonNegativeInteger" use="required"/>
+      </xsd:extension>
+    </xsd:simpleContent>
+  </xsd:complexType>
+
+  <xsd:complexType name="Page_typeType">
+    <xsd:attribute name="size"  type="xsd:integer" use="required"/>
+    <xsd:attribute name="count" type="xsd:integer" use="required"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="InfoType">
+    <xsd:attribute name="name"  type="xsd:Name"   use="required"/>
+    <xsd:attribute name="value" type="xsd:string" use="required"/>
+  </xsd:complexType>
+  
+  <xsd:complexType name="UserdataType">
+    <xsd:simpleContent>
+      <xsd:extension base="xsd:base64Binary">
+        <xsd:attribute name="name"     type="xsd:Name"               use="required"/>
+        <xsd:attribute name="length"   type="xsd:nonNegativeInteger" use="required"/>
+        <xsd:attribute name="encoding" type="xsd:Name"/>
+      </xsd:extension>
+    </xsd:simpleContent>
+  </xsd:complexType>
+  
+  <!-- Version 1.11 - kept for legacy -->         
+
+  <xsd:complexType name="TopologyType1.11">
+    <xsd:sequence>
+      <xsd:group ref="Object1.11Elt"/>
+    </xsd:sequence>
+  </xsd:complexType>
+  
+  <!--
+      Abstract type to be derived to defined attributes/elements of each specific kind of objects
+  -->
+  <xsd:complexType name="ObjectType1.11_full" abstract="true">
+    <xsd:sequence>
+      <xsd:element name="page_type" type="Page_typeType"  minOccurs="0" maxOccurs="unbounded"/>
+      <xsd:element name="info"      type="InfoType"       minOccurs="0" maxOccurs="unbounded"/>
+      <xsd:element name="distances" type="DistancesType"  minOccurs="0" maxOccurs="unbounded"/>
+      <xsd:element name="userdata"  type="UserdataType"   minOccurs="0" maxOccurs="unbounded"/>
+      <xsd:group   ref="Object1.11Elt"                    minOccurs="0"/>
+    </xsd:sequence>
+    <xsd:attribute name="os_level" type="xsd:integer"/>
+    <xsd:attribute name="os_index" type="xsd:integer"/> <!-- use="required"/> -->
+    <xsd:attribute name="name"     type="xsd:Name"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="ObjectType1.11" abstract="true">
+    <xsd:annotation>
+      <xsd:documentation>
+        Redefinition of ObjectType2.0_full element in order to restrict page_type elements.
+      </xsd:documentation>
+    </xsd:annotation>
+    <xsd:complexContent>
+      <xsd:restriction base="ObjectType1.11_full">
+        <xsd:sequence>
+          <xsd:element name="page_type" type="Page_typeType" minOccurs="0" maxOccurs="0"/>
+          <xsd:element name="info"      type="InfoType"      minOccurs="0" maxOccurs="unbounded"/>
+          <xsd:element name="distances" type="DistancesType" minOccurs="0" maxOccurs="unbounded"/>
+          <xsd:element name="userdata"  type="UserdataType"  minOccurs="0" maxOccurs="unbounded"/>
+          <xsd:group   ref="Object1.11Elt"                   minOccurs="0"/>
+        </xsd:sequence>
+      </xsd:restriction>
+    </xsd:complexContent>
+  </xsd:complexType>
+  
+  <xsd:group name="Object1.11Elt">
+    <xsd:sequence>
+      <xsd:element name="object" maxOccurs="unbounded">
+        <xsd:alternative test="@type='System'"   type="ObjectType1.11_sys"/>
+        <xsd:alternative test="@type='Machine'"  type="ObjectType1.11_machine"/>
+        <xsd:alternative test="@type='Misc'"     type="ObjectType1.11_misc"/>
+        <xsd:alternative test="@type='Group'"    type="ObjectType1.11_group"/>
+        <xsd:alternative test="@type='NUMANode'" type="ObjectType1.11_NUMA"/>
+        <xsd:alternative test="@type='Package'"  type="ObjectType1.11_pack"/>
+        <xsd:alternative test="@type='Cache'"    type="ObjectType1.11_cache"/>
+        <xsd:alternative test="@type='Core'"     type="ObjectType1.11_core"/>
+        <xsd:alternative test="@type='PU'"       type="ObjectType1.11_pu"/>
+        <xsd:alternative test="@type='Bridge'"   type="ObjectType1.11_bridge"/>
+        <xsd:alternative test="@type='PCIDev'"   type="ObjectType1.11_pci"/>
+        <xsd:alternative test="@type='OSDev'"    type="ObjectType1.11_os"/>
+      </xsd:element>
+    </xsd:sequence>
+  </xsd:group>
+
+  <xsd:simpleType name="ObjType1.11">
+    <xsd:restriction base="xsd:Name">
+      <xsd:enumeration value="System"/>
+      <xsd:enumeration value="Machine"/>
+      <xsd:enumeration value="Misc"/>
+      <xsd:enumeration value="Group"/>
+      <xsd:enumeration value="NUMANode"/>
+      <xsd:enumeration value="Package"/>
+      <xsd:enumeration value="Cache"/>
+      <xsd:enumeration value="Core"/>
+      <xsd:enumeration value="PU"/>
+      <xsd:enumeration value="Bridge"/>
+      <xsd:enumeration value="PCIDev"/>
+      <xsd:enumeration value="OSDev"/>
+    </xsd:restriction>
+  </xsd:simpleType>
+  
+  <!--  Each specific type definition -->
+  <xsd:complexType name="ObjectType1.11_sys">
+    <xsd:complexContent>
+      <xsd:extension base="ObjectType1.11">
+        <xsd:attribute name="type"             type="ObjType1.11"  use="required" fixed="System"/>
+        <xsd:attribute name="cpuset"           type="HexListType"  use="required"/>
+        <xsd:attribute name="complete_cpuset"  type="HexListType"  use="required"/>
+        <xsd:attribute name="online_cpuset"    type="HexType"      use="required"/>
+        <xsd:attribute name="allowed_cpuset"   type="HexListType"  use="required"/>
+        <xsd:attribute name="nodeset"          type="HexType"      use="required"/>
+        <xsd:attribute name="complete_nodeset" type="HexType"      use="required"/>
+        <xsd:attribute name="allowed_nodeset"  type="HexType"      use="required"/>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+  <xsd:complexType name="ObjectType1.11_machine">
+    <xsd:complexContent>
+      <xsd:extension base="ObjectType1.11_full">
+        <xsd:attribute name="type" type="ObjType1.11" use="required" fixed="Machine"/>
+        <xsd:attribute name="cpuset"           type="HexListType" use="required"/>
+        <xsd:attribute name="complete_cpuset"  type="HexListType" use="required"/>
+        <xsd:attribute name="online_cpuset"    type="HexType"     use="required"/>
+        <xsd:attribute name="allowed_cpuset"   type="HexListType" use="required"/>
+        <xsd:attribute name="nodeset"          type="HexType"     use="required"/>
+        <xsd:attribute name="complete_nodeset" type="HexType"     use="required"/>
+        <xsd:attribute name="allowed_nodeset"  type="HexType"     use="required"/>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+  <xsd:complexType name="ObjectType1.11_misc">
+    <xsd:complexContent>
+      <xsd:extension base="ObjectType1.11">
+        <xsd:attribute name="type"             type="ObjType1.11"  use="required" fixed="Misc"/>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+  <xsd:complexType name="ObjectType1.11_group">
+    <xsd:complexContent>
+      <xsd:extension base="ObjectType1.11">
+        <xsd:attribute name="type"             type="ObjType1.11"   use="required" fixed="Group"/>
+        <xsd:attribute name="cpuset"           type="HexListType"   use="required"/>
+        <xsd:attribute name="complete_cpuset"  type="HexListType"   use="required"/>
+        <xsd:attribute name="online_cpuset"    type="HexType"       use="required"/>
+        <xsd:attribute name="allowed_cpuset"   type="HexListType"   use="required"/>
+        <xsd:attribute name="nodeset"          type="HexType"       use="required"/>
+        <xsd:attribute name="complete_nodeset" type="HexType"       use="required"/>
+        <xsd:attribute name="allowed_nodeset"  type="HexType"       use="required"/>
+        <xsd:attribute name="depth"            type="xsd:integer"/>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+  <xsd:complexType name="ObjectType1.11_NUMA">
+    <xsd:complexContent>
+      <xsd:extension base="ObjectType1.11_full">
+        <xsd:attribute name="type" type="ObjType1.11" use="required" fixed="NUMANode"/>
+        <xsd:attribute name="local_memory"     type="xsd:integer" default="0"/>
+        <xsd:attribute name="cpuset"           type="HexListType" use="required"/>
+        <xsd:attribute name="complete_cpuset"  type="HexListType" use="required"/>
+        <xsd:attribute name="online_cpuset"    type="HexType"     use="required"/>
+        <xsd:attribute name="allowed_cpuset"   type="HexListType" use="required"/>
+        <xsd:attribute name="nodeset"          type="HexType"     use="required"/>
+        <xsd:attribute name="complete_nodeset" type="HexType"     use="required"/>
+        <xsd:attribute name="allowed_nodeset"  type="HexType"     use="required"/>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+  <xsd:complexType name="ObjectType1.11_pack">
+    <xsd:complexContent>
+      <xsd:extension base="ObjectType1.11">
+        <xsd:attribute name="type" type="ObjType1.11" use="required" fixed="Package"/>
+        <xsd:attribute name="cpuset"           type="HexListType" use="required"/>
+        <xsd:attribute name="complete_cpuset"  type="HexListType" use="required"/>
+        <xsd:attribute name="online_cpuset"    type="HexType"     use="required"/>
+        <xsd:attribute name="allowed_cpuset"   type="HexListType" use="required"/>
+        <xsd:attribute name="nodeset"          type="HexType"     use="required"/>
+        <xsd:attribute name="complete_nodeset" type="HexType"     use="required"/>
+        <xsd:attribute name="allowed_nodeset"  type="HexType"     use="required"/>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+  <xsd:complexType name="ObjectType1.11_cache">
+    <xsd:complexContent>
+      <xsd:extension base="ObjectType1.11">
+        <xsd:attribute name="type"  type="ObjType1.11" use="required" fixed="Cache"/>
+        <xsd:attribute name="depth"               type="xsd:integer" use="required"/>
+        <xsd:attribute name="cache_size"          type="xsd:integer" use="required"/>
+        <xsd:attribute name="cache_linesize"      type="xsd:integer" use="required"/>
+        <xsd:attribute name="cache_associativity" type="xsd:integer" use="required"/>
+        <xsd:attribute name="cache_type"          type="xsd:integer" use="required"/>
+        <xsd:attribute name="cpuset"              type="HexListType" use="required"/>
+        <xsd:attribute name="complete_cpuset"     type="HexListType" use="required"/>
+        <xsd:attribute name="online_cpuset"       type="HexType"     use="required"/>
+        <xsd:attribute name="allowed_cpuset"      type="HexListType" use="required"/>
+        <xsd:attribute name="nodeset"             type="HexType"     use="required"/>
+        <xsd:attribute name="complete_nodeset"    type="HexType"     use="required"/>
+        <xsd:attribute name="allowed_nodeset"     type="HexType"     use="required"/>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+  <xsd:complexType name="ObjectType1.11_core">
+    <xsd:complexContent>
+      <xsd:extension base="ObjectType1.11">
+        <xsd:attribute name="type"             type="ObjType1.11" use="required" fixed="Core"/>
+        <xsd:attribute name="cpuset"           type="HexListType" use="required"/>
+        <xsd:attribute name="complete_cpuset"  type="HexListType" use="required"/>
+        <xsd:attribute name="online_cpuset"    type="HexType"     use="required"/>
+        <xsd:attribute name="allowed_cpuset"   type="HexListType" use="required"/>
+        <xsd:attribute name="nodeset"          type="HexType"     use="required"/>
+        <xsd:attribute name="complete_nodeset" type="HexType"     use="required"/>
+        <xsd:attribute name="allowed_nodeset"  type="HexType"     use="required"/>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+  <xsd:complexType name="ObjectType1.11_pu">
+    <xsd:complexContent>
+      <xsd:extension base="ObjectType1.11">
+        <xsd:attribute name="type"             type="ObjType1.11" use="required" fixed="PU"/>
+        <xsd:attribute name="cpuset"           type="HexListType" use="required"/>
+        <xsd:attribute name="complete_cpuset"  type="HexListType" use="required"/>
+        <xsd:attribute name="allowed_cpuset"   type="HexType"     use="required"/>
+        <xsd:attribute name="online_cpuset"    type="HexListType" use="required"/>
+        <xsd:attribute name="nodeset"          type="HexType"     use="required"/>
+        <xsd:attribute name="complete_nodeset" type="HexType"     use="required"/>
+        <xsd:attribute name="allowed_nodeset"  type="HexType"     use="required"/>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+  <xsd:complexType name="ObjectType1.11_bridge">
+    <xsd:complexContent>
+      <xsd:extension base="ObjectType1.11">
+        <xsd:attribute name="type"        type="ObjType1.11" use="required" fixed="Bridge"/>
+        <xsd:attribute name="depth"       type="xsd:integer"/>
+        <xsd:attribute name="bridge_type" type="xsd:string"  use="required"/>
+        <xsd:attribute name="bridge_pci"  type="xsd:string"  use="required"/>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+  <xsd:complexType name="ObjectType1.11_pci">
+    <xsd:complexContent>
+      <xsd:extension base="ObjectType1.11">
+        <xsd:attribute name="type"           type="ObjType1.11" use="required" fixed="PCIDev"/>
+        <xsd:attribute name="pci_busid"      type="xsd:string"  use="required"/>
+        <xsd:attribute name="pci_type"       type="xsd:string"  use="required"/>
+        <xsd:attribute name="pci_link_speed" type="xsd:decimal" use="required"/>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+  <xsd:complexType name="ObjectType1.11_os">
+    <xsd:complexContent>
+      <xsd:extension base="ObjectType1.11">
+        <xsd:attribute name="type"       type="ObjType1.11"  use="required" fixed="OSDev"/>
+        <xsd:attribute name="osdev_type" type="xsd:integer"  use="required"/>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+
+  <xsd:complexType name="DistancesType">
+    <xsd:sequence>
+      <xsd:element name="latency" type="LatencyType" minOccurs="0" maxOccurs="unbounded"/>
+    </xsd:sequence>
+    <xsd:attribute name="nbobjs"         type="xsd:integer" use="required"/>
+    <xsd:attribute name="relative_depth" type="xsd:integer" use="required"/>
+    <xsd:attribute name="latency_base"   type="xsd:decimal" use="required"/> <!-- type? -->
+  </xsd:complexType>
+
+  <xsd:complexType name="LatencyType">
+    <xsd:attribute name="value" type="xsd:decimal" use="required"/> <!-- type?-->
+  </xsd:complexType>
+
+  <!--
+      TopologyDiff types
+  -->
+
+  <xsd:complexType name="TopologyDiffType">
+    <xsd:sequence>
+      <xsd:element name="diff" minOccurs="0" maxOccurs="unbounded">
+        <xsd:alternative test="@obj_attr_type='0'" type="DiffType_0"/>
+        <xsd:alternative test="@obj_attr_type='1'" type="DiffType_1"/>
+        <xsd:alternative test="@obj_attr_type='2'" type="DiffType_2"/>
+      </xsd:element>
+    </xsd:sequence>
+    <xsd:attribute name="refname" type="xsd:string"/>
+  </xsd:complexType>
+
+  <xsd:simpleType name="DiffObjType">
+    <xsd:restriction base="xsd:integer">
+      <xsd:enumeration value="0">
+        <xsd:annotation>
+          <xsd:documentation>Diff in the local memory.</xsd:documentation>
+        </xsd:annotation>
+      </xsd:enumeration>
+      <xsd:enumeration value="1">
+        <xsd:annotation>
+          <xsd:documentation>Diff in the name attribute.</xsd:documentation>
+        </xsd:annotation>
+      </xsd:enumeration>
+      <xsd:enumeration value="2">
+        <xsd:annotation>
+          <xsd:documentation>Diff in the info attribute.</xsd:documentation>
+        </xsd:annotation>
+      </xsd:enumeration>
+    </xsd:restriction>
+  </xsd:simpleType>
+  
+  <xsd:complexType name="DiffType" abstract="true">
+    <xsd:attribute name="type"     type="xsd:integer" use="required">
+      <xsd:annotation>
+        <xsd:documentation>Should be equal to 0 so far.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="obj_depth" use="required">
+      <xsd:simpleType>
+        <xsd:union memberTypes="xsd:nonNegativeInteger">
+          <xsd:simpleType>
+            <xsd:restriction base="xsd:integer">
+              <xsd:enumeration value="-3">
+                <xsd:annotation>
+                  <xsd:documentation>Bridge</xsd:documentation>
+                </xsd:annotation>
+              </xsd:enumeration>
+              <xsd:enumeration value="-4">
+                <xsd:annotation>
+                  <xsd:documentation>PCI device</xsd:documentation>
+                </xsd:annotation>
+              </xsd:enumeration>
+              <xsd:enumeration value="-5">
+                <xsd:annotation>
+                  <xsd:documentation>OS device</xsd:documentation>
+                </xsd:annotation>
+              </xsd:enumeration>
+              <xsd:enumeration value="-6">
+                <xsd:annotation>
+                  <xsd:documentation>NUMA node</xsd:documentation>
+                </xsd:annotation>
+              </xsd:enumeration>
+            </xsd:restriction>
+          </xsd:simpleType>
+        </xsd:union>
+      </xsd:simpleType>
+    </xsd:attribute>
+    <xsd:attribute name="obj_index" type="xsd:nonNegativeInteger" use="required"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="DiffType_0">
+    <xsd:complexContent>
+      <xsd:extension base="DiffType">
+        <xsd:attribute name="obj_attr_type"     type="DiffObjType"  fixed="0"  use="required"/>
+        <xsd:attribute name="obj_attr_newvalue" type="xsd:nonNegativeInteger"  use="required"/>
+        <xsd:attribute name="obj_attr_oldvalue" type="xsd:nonNegativeInteger"  use="required"/>
+        <xsd:attribute name="obj_attr_index"    type="xsd:nonNegativeInteger"/>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+  <xsd:complexType name="DiffType_1">
+    <xsd:complexContent>
+      <xsd:extension base="DiffType">
+        <xsd:attribute name="obj_attr_type"     type="DiffObjType"  fixed="1"  use="required"/>
+        <xsd:attribute name="obj_attr_newvalue" type="xsd:nonNegativeInteger"  use="required"/>
+        <xsd:attribute name="obj_attr_oldvalue" type="xsd:nonNegativeInteger"  use="required"/>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+  <xsd:complexType name="DiffType_2">
+    <xsd:complexContent>
+      <xsd:extension base="DiffType">
+        <xsd:attribute name="obj_attr_type"     type="DiffObjType" use="required" fixed="2"/>
+        <xsd:attribute name="obj_attr_name"     type="xsd:Name"    use="required"/>
+        <xsd:attribute name="obj_attr_newvalue" type="xsd:string"  use="required"/>
+        <xsd:attribute name="obj_attr_oldvalue" type="xsd:string"  use="required"/>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+  
+</xsd:schema>
