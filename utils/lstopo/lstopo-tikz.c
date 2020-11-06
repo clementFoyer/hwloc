@@ -57,24 +57,23 @@ tikz_box(struct lstopo_output *loutput, const struct lstopo_color *lcolor, unsig
   int r = lcolor->r, g = lcolor->g, b = lcolor->b;
 
   struct lstopo_obj_userdata *ou = obj ? obj->userdata : NULL;
-  unsigned linestyle = 0; /* solid */
+  char linestyle[64] = "solid";
   unsigned thickness = loutput->thickness;
   float dashspace = 1.15; /* default dash size: 1.15pt */
 
   if (loutput->show_cpukinds && ou && ou->cpukind_style) {
-    linestyle = 1; /* dash */
+    char dashsize[20], *comma = NULL;
     thickness *= ou->cpukind_style;
     dashspace *= 1U << ou->cpukind_style;
+    snprintf(dashsize, 20, "%.4f", dashspace);
+    comma = strchr(dashsize, ',');
+    if (comma) *comma = '.'; /* Use decimal dot despite the locale's opinion. */
+    snprintf(linestyle, 64, "dash pattern=on %spt off %spt",
+             dashsize, dashsize);
   }
 
-  fprintf(file, "\t\\filldraw [fill=hwloc-color-%d-%d-%d,draw=black,line width=%upt,",
-          r, g, b, thickness);
-  if (linestyle)
-    fprintf(file, "dash pattern=on %.4fpt off %.4fpt",
-            dashspace, dashspace);
-  else
-    fprintf(file, "solid");
-  fprintf(file, "] (%u,%u) rectangle ++(%u,%u);\n", x, y, width, height);
+  fprintf(file, "\t\\filldraw [fill=hwloc-color-%d-%d-%d,draw=black,line width=%upt,%s] (%u,%u) rectangle ++(%u,%u);\n",
+          r, g, b, thickness, linestyle, x, y, width, height);
 }
 
 
